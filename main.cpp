@@ -21,27 +21,43 @@ typedef struct myObj//Block(of memory)
     struct myObj * next;
 }myObj;
 
-void * alloMem(myObj*head, size_t mSize)// allocates space in memory of specified size
-{                           // can manage memory using pointer math
+
+/* alloMem()
+Allocate Memory 
+IF
+the current cell is free and the cuurrent size of our memory is greater then the space we want to allocate
+we then set the block of memory to 'In-use' and return a pointer to the address after this block
+*/
+void * alloMem(myObj*head, size_t mSize)
+{                           
     myObj* cur = head;
+    uintptr_t cur_addr = (uintptr_t)cur + sizeof(void*), aligned_addr;
+    void** aligned_ptr = nullptr;
 
     while(cur != nullptr)
     {
-        if(cur->free && cur->size >= mSize)// if the current cell is free and the cuurrent size of our memory is greater then the space we want to allocate
+        if(cur->free && cur->size >= mSize)
         {
-            cur->free = 0;// cell is no longer free
-            return (void*)(cur + 1);// Pointer just after the header
+            aligned_addr = (cur_addr + (mSize-1)) & ~(mSize-1);// aligns address to our desired boundary
+            aligned_ptr = (void**)aligned_addr;
+            aligned_ptr[-1] = cur;
+            cur->free = 0;
+            return (void*)(cur + 1);
         }
         cur = cur->next;//out of memory
     }
-    return nullptr;
+    return (void*)aligned_ptr;
 }
 
+/* freeMem()
+Free Memory 
+by going back to the previously allocated block and setting it to free
+*/
 void * freeMem(void * p)
 {
     if(!p) return nullptr;//base case
-    myObj* obj = ((myObj*) p) - 1;//pointer to location in memory just before the heade, basically removing one cell in our linked list
-    obj->free = 1;// set the cell back to free/Available Status
+    myObj* obj = ((myObj*) p) - 1;
+    obj->free = 1;
 }
 
 
@@ -57,10 +73,10 @@ myObj * init_allocator(myObj * newObj) // initializes everything in the new obj 
 
 int main()
 {
-    myObj * newObj = init_allocator(newObj);//initialize memory node
-    alloMem(newObj,sizeof(newObj));// allocate corresponting w/ conditional checks
+    myObj * newObj = init_allocator(newObj);
+    alloMem(newObj,sizeof(newObj));
     cout << "success" << endl;
-    freeMem(newObj);// free memory(opposite of alloMem() w/ less checks)
+    freeMem(newObj);
     cout << "successfully freed" << endl;
 
     return 0;
