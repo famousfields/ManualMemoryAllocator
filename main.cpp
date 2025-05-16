@@ -12,7 +12,8 @@ char memory_pool[POOL_SIZE];//pre allocated block of memory(Array of Bytes)
                             // speeds up allocation(you don't call malloc() or free() every time) 
                             // specific use of char because a character is one byte
 
-                    
+
+static int count = 0;//Number of total node entries               
 typedef struct myObj//Block(of memory)
 {
     // data 
@@ -28,7 +29,7 @@ IF
 the current cell is free and the cuurrent size of our memory is greater then the space we want to allocate
 we then set the block of memory to 'In-use' and return a pointer to the address after this block
 */
-void * alloMem(myObj*head, size_t mSize)
+void * alloMem(myObj*head, size_t mSize, int &count)
 {                           
     myObj* cur = head;
     uintptr_t cur_addr = (uintptr_t)cur + sizeof(void*), aligned_addr;
@@ -42,6 +43,7 @@ void * alloMem(myObj*head, size_t mSize)
             aligned_ptr = (void**)aligned_addr;
             aligned_ptr[-1] = cur;
             cur->free = 0;
+            count++;
             return (void*)(cur + 1);
         }
 
@@ -54,7 +56,7 @@ void * sortBlocks(myObj*head)
 {
     if(!head) return nullptr;
     myObj* cur = head;
-    myObj* dummy = new myObj{0}; // temporary dummy node
+    myObj* dummy =(myObj*)malloc(sizeof(myObj)); // temporary dummy node
     dummy->next = head;
     myObj* prev = dummy;
     myObj*nxt = cur->next;
@@ -101,14 +103,23 @@ myObj * init_allocator(myObj * newObj) // initializes everything in the new obj 
 
     return newObj;
 }
+void ** addToMem(myObj**allMemory, myObj*addedNode)
+{
+
+}
 
 int main()
 {
-    myObj * newObj = init_allocator(newObj);
-    newObj =(myObj*)alloMem(newObj,sizeof(newObj));// returns void allocated block of memory(cast into desired type)
+    // memory allocation
+    int * count = (int*)calloc(0,sizeof(int));
+    myObj * newObj  = (myObj*) alloMem(newObj, sizeof(myObj), *count);
+
+    //myObj ** allMemory = (myObj**) malloc(sizeof(myObj* )* count);// a double pointer like this would allow you to index into any spot in the given linked list whenever needed
+    newObj = init_allocator(newObj);
     //newObj =(myObj*)sortBlocks;
-    cout << "success" << endl;
+    cout << "success" <<" - "<< *count << endl;
     freeMem(newObj);
+    free(count);
     cout << "successfully freed" << endl;
 
     return 0;
