@@ -36,22 +36,54 @@ void * alloMem(myObj*head, size_t mSize)
 
     while(cur != nullptr)
     {
-        if(cur->free && cur->size >= mSize)
+        if(cur->free && cur->size >= mSize)// first fit: first available block that is big enough
         {
-            aligned_addr = (cur_addr + (mSize-1)) & ~(mSize-1);// aligns address to our desired boundary
+            aligned_addr = (cur_addr + (mSize-1)) & ~(mSize-1);// aligns address to our desired boundary(8 & 16 bits)
             aligned_ptr = (void**)aligned_addr;
             aligned_ptr[-1] = cur;
             cur->free = 0;
             return (void*)(cur + 1);
         }
-        cur = cur->next;//out of memory
+
+        cur = cur->next;
     }
-    return (void*)aligned_ptr;
+    return (void*)aligned_ptr;//returns void pointer to the block of memory
+}
+
+void * sortBlocks(myObj*head)
+{
+    if(!head) return nullptr;
+    myObj* cur = head;
+    myObj* dummy = new myObj{0}; // temporary dummy node
+    dummy->next = head;
+    myObj* prev = dummy;
+    myObj*nxt = cur->next;
+
+    while(nxt)
+    {
+        if(cur->size > nxt->size)
+        {
+            cur->next = nxt->next;
+            nxt->next = cur;
+            cur = nxt;
+            prev->next = cur;
+        }
+        prev = cur;
+        cur = cur->next;
+        nxt = cur->next;
+    }
+    head = dummy->next;
+    delete dummy;
+   
+    
+    return (void*) head;
 }
 
 /* freeMem()
 Free Memory 
 by going back to the previously allocated block and setting it to free
+
+*implementing Segmented free list using best-fit, first-fit, or next-fit strategy
 */
 void * freeMem(void * p)
 {
@@ -59,7 +91,6 @@ void * freeMem(void * p)
     myObj* obj = ((myObj*) p) - 1;
     obj->free = 1;
 }
-
 
 myObj * init_allocator(myObj * newObj) // initializes everything in the new obj node
 {
@@ -74,7 +105,8 @@ myObj * init_allocator(myObj * newObj) // initializes everything in the new obj 
 int main()
 {
     myObj * newObj = init_allocator(newObj);
-    alloMem(newObj,sizeof(newObj));
+    newObj =(myObj*)alloMem(newObj,sizeof(newObj));// returns void allocated block of memory(cast into desired type)
+    //newObj =(myObj*)sortBlocks;
     cout << "success" << endl;
     freeMem(newObj);
     cout << "successfully freed" << endl;
