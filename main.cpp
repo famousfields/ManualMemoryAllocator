@@ -112,10 +112,11 @@ int main()
 {
     // memory allocation
     int * count = (int*)calloc(0,sizeof(int));
-    myObj * newObj  = (myObj*) alloMem(newObj, sizeof(myObj), *count);
+    myObj * newObj  = init_allocator(newObj);
+    newObj = (myObj*) alloMem(newObj, sizeof(myObj), *count);
 
     //myObj ** allMemory = (myObj**) malloc(sizeof(myObj* )* count);// a double pointer like this would allow you to index into any spot in the given linked list whenever needed
-    newObj = init_allocator(newObj);
+    
     //newObj =(myObj*)sortBlocks;
     cout << "success" <<" - "<< *count << endl;
     freeMem(newObj);
